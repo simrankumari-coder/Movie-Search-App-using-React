@@ -70,8 +70,8 @@ function App() {
       return
     }
     dispatch({ type: "process", payload: true })
-
-    let response = await fetch(`http://www.omdbapi.com/?apikey=${import.meta.env.VITE_OMDB_API_KEY}&s=${state.input}`)
+    console.log(import.meta.env.VITE_OMDB_API_KEY)
+    let response = await fetch(`https://www.omdbapi.com/?apikey=${import.meta.env.VITE_OMDB_API_KEY}&s=${state.input}`)
     let data = await response.json()
     console.log(data)
     if (data.Response === "False") {
