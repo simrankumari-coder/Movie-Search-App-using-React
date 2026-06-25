@@ -1,15 +1,19 @@
 
-import { useState, useEffect, useRef, useReducer } from "react"
+import { useState, useEffect, useRef, useReducer, useCallback } from "react"
 import MovieList from "./components/MovieList"
+import Search from "./Search"
+import { MovieContext } from "./context/MovieContext"
 function App() {
-  const inputRef = useRef(null)
+
+
 
   const initialValue = {
     input: "",
     movies: [],
     process: false,
     error: false,
-    enter: false
+    enter: false,
+    fav: []
   }
   function countReducer(state, action) {
     switch (action.type) {
@@ -18,8 +22,16 @@ function App() {
       case "process": return { ...state, process: action.payload }
       case "error": return { ...state, error: action.payload }
       case "enter": return { ...state, enter: action.payload }
+      case "fav": return { ...state, fav: action.payload }
+      case "add_fav": {
+        const newFav = [...state.fav, action.payload]
+        savedFav(newFav)
+        return { ...state, fav: newFav }
+      }
+
     }
   }
+  const inputRef = useRef(null)
   const [state, dispatch] = useReducer(countReducer, initialValue)
   const handleInput = (e) => {
     dispatch({
@@ -28,13 +40,15 @@ function App() {
     })
   }
 
-
-
-
-
   useEffect(() => {
     let saved = loadStorage()
     dispatch({ type: "movies", payload: saved })
+  }, [])
+  useEffect(() => {
+    let saveFav = loadFav()
+    dispatch({ type: "fav", payload: saveFav })
+
+
   }, [])
 
 
@@ -42,7 +56,13 @@ function App() {
     inputRef.current.focus()    //we can access inputRef using .current
   }, [])
 
+  const addToFav = useCallback(
+    (movieId) => {
 
+      dispatch({ type: "add_fav", payload: movieId })
+    },
+    [dispatch],
+  )
 
   async function handleData() {
     if (state.input === "") {
@@ -64,6 +84,7 @@ function App() {
       dispatch({ type: "movies", payload: data.Search })
       savedData(data.Search)
 
+
       dispatch({ type: "error", payload: false })
     }
     dispatch({ type: "enter", payload: false })
@@ -76,29 +97,37 @@ function App() {
     let storeData = localStorage.getItem("card")
     return storeData ? JSON.parse(storeData) : []
   }
+  function savedFav(fav) {
+    localStorage.setItem("favourite", JSON.stringify(fav))
+  }
+  function loadFav() {
+    let storeFav = localStorage.getItem("favourite")
+    return storeFav ? JSON.parse(storeFav) : []
+  }
 
   return (
     <>
-      <div className="flex mt-16 flex-col items-center gap-12 justify-center px-4 ">
-        <h1 className=" flex justify-center items-center font-extrabold text-8xl text-white">Movie Search App</h1>
+      <MovieContext.Provider value={{ addToFav, state, dispatch, handleData, handleInput, inputRef, }}>
+        <div className="w-screen  flex mt-16 flex-col  items-center gap-6 md:gap-12 justify-center px-4">
 
-        <div className="flex flex-col w-full max-w-xl  gap-12 justify-center items-center">
-          <div className="flex flex-col w-full max-w-xl  gap-4 justify-center items-center">
-            <label className="flex flex-col items-center w-full text-white ">Movie Name
-              <input ref={inputRef} value={state.input} onChange={handleInput} className="flex justify-center items-center w-full p-2  font-sans  border-2 border-white-500  rounded-3xl h-10" type='text' placeholder='search here' /></label>
-            <button className="bg-gray-800 w-full  text-white flex justify-center items-center font-sans text-2xl  rounded-3xl  p-1  h-10" onClick={handleData}>Search</button>
+          <h1 className="flex justify-center items-center font-extrabold text-4xl md:text-8xl text-white">Movie Search App</h1>
+          <Search />
+          {/* <div className="bg-gray-800 max-w-96 text-white flex justify-center items-center font-sans text-lg md:text-2xl rounded-3xl p-1 h-10">
+            <span className="text-2xl">❤</span>
+            <span className="text-lg font-semibold">Favorites: {state.fav.length}</span>
+          </div> */}
+          <div className="text-red-600 text-xl font-bold bg-gray-800 p-2 rounded-2xl">
+            ❤ Favorites: {state.fav.length}
+          </div>
+          <MovieList />
 
-            {state.enter && <div className="flex justify-center items-center text-white">Please enter the movie name</div>}
-            {state.process && <div className="flex justify-center items-center text-white">Searching...</div>}
-            {state.error && <div className="flex justify-center items-center text-white">Movie is not found</div>}</div>
-          <MovieList
-            movies={state.movies}
-          />
+
         </div>
-      </div >
 
 
 
+
+      </MovieContext.Provider >
     </>
   )
 }

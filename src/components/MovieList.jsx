@@ -1,21 +1,23 @@
 import React from 'react'
 import MovieCard from './MovieCard'
-
-const MovieList = ({ movies }) => {
+import { MovieContext } from '../context/MovieContext'
+import { useContext } from 'react'
+const MovieList = () => {
+    const { state } = useContext(MovieContext)
     return (
         <div>
-            <div className=" md:w-6xl  w-full grid grid-cols-1 md:grid-cols-3 gap-12">
-                {movies.map((movie) =>
+
+            <div className="w-full  mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-12">
+                {state.movies.map((movie) =>
                     <MovieCard
                         key={movie.imdbID}
-                        Poster={movie.Poster}
-                        Title={movie.Title}
-                        Year={movie.Year}
+                        movie={movie}
 
                     />
                 )}
             </div>
-        </div>
+        </div >
+
     )
 }
 
